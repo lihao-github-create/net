@@ -1,4 +1,5 @@
 #include <liburing.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/timerfd.h>
@@ -22,7 +23,7 @@ void timer_callback(struct io_uring *ring, int timer_fd) {
   // Add the timer_fd to io_uring again for the next expiration
   struct io_uring_sqe *sqe;
   sqe = io_uring_get_sqe(ring);
-  io_uring_prep_poll_add(sqe, timer_fd, POLL_IN);
+  io_uring_prep_poll_add(sqe, timer_fd, POLLIN);
   io_uring_sqe_set_data(sqe, NULL);
   io_uring_submit(ring);
 }
@@ -54,7 +55,7 @@ int main() {
   // Add the timer_fd to io_uring
   struct io_uring_sqe *sqe;
   sqe = io_uring_get_sqe(&ring);
-  io_uring_prep_poll_add(sqe, timer_fd, POLL_IN);
+  io_uring_prep_poll_add(sqe, timer_fd, POLLIN);
   io_uring_sqe_set_data(sqe, NULL);
   io_uring_submit(&ring);
 
