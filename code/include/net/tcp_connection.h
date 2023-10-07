@@ -14,23 +14,24 @@ class EventLoop;
  * @brief 表示一个已经建立的 tcp 连接。
  */
 class TcpConnection {
+  NOCOPYABLE_DECLARE(TcpConnection)
 public:
-  TcpConnection(std::weak_ptr<EventLoop> loop, const std::string &name,
-                int sockfd, const InetAddress &localAddr,
-                const InetAddress &peerAddr);
+  TcpConnection(EventLoop *loop, const std::string &name, int sockfd,
+                const InetAddress &localAddr, const InetAddress &peerAddr);
   ~TcpConnection();
+  // send, maybe cross-thread call, but thread safe
+  void send(const char *message, int len);
 
-  void send(const void *message, int len);
-  // reading or not
+  // reading or not, maybe cross-thread call, but thread safe
   void startRead();
   void stopRead();
-  // shutdown connection
-  void shutdown();
 
+  // shutdown connection, maybe cross-thread call, but thread safe
+  void shutdownWrite();
+
+  // callback
   void setConnectionCallback(const ConnectionCallback &cb);
-
   void setMessageCallback(const MessageCallback &cb);
-
   void setWriteCompleteCallback(const WriteCompleteCallback &cb);
 
 private:

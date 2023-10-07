@@ -36,6 +36,10 @@ public:
   void disableWriting();
   void disableAll();
 
+  bool isWriting() const;
+  bool isReading() const;
+  bool isNoneEvent() const;
+
 private:
   class Impl;
   std::unique_ptr<Impl> impl_;

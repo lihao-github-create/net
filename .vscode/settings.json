@@ -56,6 +56,8 @@
     "socket": "cpp",
     "timer": "cpp",
     "future": "cpp",
-    "list": "cpp"
+    "list": "cpp",
+    "forward_list": "cpp",
+    "iostream": "cpp"
   }
 }

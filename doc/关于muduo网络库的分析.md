@@ -48,3 +48,11 @@ EventLoop* EventLoop::getEventLoopOfCurrentThread()
 ### Acceptor Class
 
 负责接收新 TCP 连接，并通过回调通知使用者。
+
+### Buffer
+
+设计缺陷：
+
+- 一次接收的字节数小于等于 65536 字节，也就意味着，如果使用该库进行发送和接收，那么发送的字节数也至多为 65536 字节；
+- Buffer size 会自动增长，却不会较少，实属浪费内存；
+- 底层使用`std::vector<char>`, 自动增长会造成内存再分配，同时也会进行初始化，初始化是一个多余的操作。

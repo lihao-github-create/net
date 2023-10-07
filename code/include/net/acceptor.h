@@ -14,14 +14,12 @@ class Acceptor {
 public:
   using NewConnectionCallback =
       std::function<void(int sockfd, const InetAddress &)>;
-  Acceptor(std::weak_ptr<EventLoop> loop, const InetAddress &listenAddr);
+  Acceptor(EventLoop *loop, const InetAddress &listenAddr);
   ~Acceptor();
 
-  void setNewConnectionCallback();
+  void setNewConnectionCallback(const NewConnectionCallback &cb);
   // start listening
-  void start();
-  // stop listening
-  void stop();
+  void listen();
 
 private:
   class Impl;

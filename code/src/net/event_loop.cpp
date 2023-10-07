@@ -1,4 +1,5 @@
 #include "net/event_loop.h"
+#include "base/mutex_macro.h"
 #include "net/channel.h"
 #include "net/epoll_poller.h"
 #include "net/poller.h"
@@ -31,11 +32,14 @@ public:
 
   bool isInLoopThread();
 
+  void runInLoop(PendingFunctor cb);
+
 private:
   std::atomic<bool> looping_;
   pid_t threadId_;
   std::unique_ptr<Poller> poller_;
   std::mutex mutex_;
+  std::vector<PendingFunctor> pendingFunctors_ GUARDED_BY(mutex_);
 };
 
 EventLoop::Impl::Impl()
@@ -63,12 +67,10 @@ void EventLoop::Impl::stop() {
 }
 
 void EventLoop::Impl::updateChannel(Channel *channel) {
-  assertInLoopThread();
-  poller_->updateChannel(channel);
+  runInLoop([&]() { poller_->updateChannel(channel); });
 }
 void EventLoop::Impl::removeChannel(Channel *channel) {
-  assertInLoopThread();
-  poller_->removeChannel(channel);
+  runInLoop([&]() { poller_->removeChannel(channel); });
 }
 
 void EventLoop::Impl::assertInLoopThread() {
@@ -81,6 +83,16 @@ void EventLoop::Impl::assertInLoopThread() {
 
 bool EventLoop::Impl::isInLoopThread() { return threadId_ == pthread_self(); }
 
+void EventLoop::Impl::runInLoop(PendingFunctor cb) {
+  if (isInLoopThread()) {
+    cb();
+  } else {
+    std::lock_guard<std::mutex> lock(mutex_);
+    pendingFunctors_.push_back(std::move(cb));
+  }
+}
+
+/***********************************EventLoop**************************************/
 EventLoop::EventLoop() : impl_(std::make_unique<EventLoop::Impl>()) {
   if (t_loopInThisThread) {
     LOG(FATAL) << "Another EventLoop " << t_loopInThisThread
@@ -110,4 +122,6 @@ EventLoop *EventLoop::getEventLoopOfCurrentThread() {
 void EventLoop::assertInLoopThread() { impl_->assertInLoopThread(); }
 
 bool EventLoop::isInLoopThread() { impl_->isInLoopThread(); }
+
+void EventLoop::runInLoop(PendingFunctor cb) { impl_->runInLoop(cb); }
 } // namespace net

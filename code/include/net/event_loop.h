@@ -1,5 +1,6 @@
 #ifndef __EVENT_LOOP_THREAD_H__
 #define __EVENT_LOOP_THREAD_H__
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -14,6 +15,8 @@ namespace net {
  */
 class EventLoop {
   NOCOPYABLE_DECLARE(EventLoop)
+  using PendingFunctor = std::function<void()>;
+
 public:
   EventLoop();
   ~EventLoop();
@@ -21,13 +24,18 @@ public:
   void loop();
 
   void stop();
-
+  // thread safe
+  void addChannel(Channel *channel);
+  // thread safe
   void updateChannel(Channel *channel);
+  // thread safe
   void removeChannel(Channel *channel);
 
   static EventLoop *getEventLoopOfCurrentThread();
 
   void assertInLoopThread();
+
+  void runInLoop(PendingFunctor cb);
 
   bool isInLoopThread();
 

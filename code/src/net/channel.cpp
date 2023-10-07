@@ -34,6 +34,10 @@ public:
   void disableWriting();
   void disableAll();
 
+  bool isWriting() const { return events_ & kWriteEvent; }
+  bool isReading() const { return events_ & kReadEvent; }
+  bool isNoneEvent() const { return events_ == kNoneEvent; }
+
 private:
   Channel *ownerChannel_;
   EventLoop *ownerLoop_;
@@ -49,9 +53,13 @@ private:
 Channel::Impl::Impl(Channel *channel, EventLoop *loop, int fd)
     : ownerChannel_(channel), ownerLoop_(loop), fd_(fd) {}
 
-Channel::Impl::~Impl() {}
+Channel::Impl::~Impl() {
+  disableAll();
+  ownerLoop_->removeChannel(ownerChannel_);
+}
 
 void Channel::Impl::hanleEvent() {
+  ownerLoop_->assertInLoopThread();
   if ((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
     LOG(WARNING) << "fd = " << fd_ << " Channel::handle_event() POLLHUP";
     if (closeCallback_)
@@ -115,28 +123,38 @@ std::string Channel::Impl::eventsToString() {
 
 // events register and unregister
 void Channel::Impl::enableReading() {
-  events_ |= kReadEvent;
-  ownerLoop_->updateChannel(ownerChannel_);
+  if (!isReading()) {
+    events_ |= kReadEvent;
+    ownerLoop_->updateChannel(ownerChannel_);
+  }
 }
 
 void Channel::Impl::disableReading() {
-  events_ &= ~kReadEvent;
-  ownerLoop_->updateChannel(ownerChannel_);
+  if (isReading()) {
+    events_ &= ~kReadEvent;
+    ownerLoop_->updateChannel(ownerChannel_);
+  }
 }
 
 void Channel::Impl::enableWriting() {
-  events_ |= kWriteEvent;
-  ownerLoop_->updateChannel(ownerChannel_);
+  if (!isWriting()) {
+    events_ |= kWriteEvent;
+    ownerLoop_->updateChannel(ownerChannel_);
+  }
 }
 
 void Channel::Impl::disableWriting() {
-  events_ &= ~kWriteEvent;
-  ownerLoop_->updateChannel(ownerChannel_);
+  if (isWriting()) {
+    events_ &= ~kWriteEvent;
+    ownerLoop_->updateChannel(ownerChannel_);
+  }
 }
 
 void Channel::Impl::disableAll() {
-  events_ = kNoneEvent;
-  ownerLoop_->updateChannel(ownerChannel_);
+  if (!isNoneEvent()) {
+    events_ = kNoneEvent;
+    ownerLoop_->updateChannel(ownerChannel_);
+  }
 }
 
 /************************************Channel**********************************/
