@@ -14,26 +14,24 @@ public:
   ~TCPSocket();
 
   static int generateSocket(void);
-  int bind(const InetAddress &);
-  int listen(int qs);
-  int connect(const InetAddress &);
+  bool bind(const InetAddress &);
+  bool listen(int qs);
+  bool connect(const InetAddress &);
   int accept(InetAddress &);
   int read(char *buf, size_t len);
   int readn(char *vptr, unsigned int n);
   int write(const char *buf, size_t len);
   int writev(const struct iovec *, size_t);
   int getFd(void) const;
-  int close(void);
-  int shutdownWrite(void);
+  bool close(void);
+  bool shutdownWrite(void);
 
-  int setNonblock(void);
-  int enableReuseaddr(void);
-  int disableLinger(void);
-  int disableNagle(void);
-  int setKeepAlive(void);
+  bool setNonblock(void);
+  bool enableReuseaddr(void);
+  bool setKeepAlive(void);
 
 private:
-  int m_sockFd;
+  int sockFd_;
 };
 
 } // namespace net

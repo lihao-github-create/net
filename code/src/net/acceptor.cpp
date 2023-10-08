@@ -53,17 +53,22 @@ void Acceptor::Impl::handleRead() {
   if (connfd >= 0) {
     if (newConnectionCallback_) {
       newConnectionCallback_(connfd, peerAddr);
+    } else {
+      LOG(WARNING) << "newConnectionCallback_ is not set";
     }
   } else {
     LOG(ERROR) << "accept() error";
   }
 }
 /**************************************Acceptor************************************/
-Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr) {}
+Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr)
+    : impl_(std::make_unique<Impl>(loop, listenAddr)) {}
 Acceptor::~Acceptor() {}
 
-void Acceptor::setNewConnectionCallback(const NewConnectionCallback &cb) {}
+void Acceptor::setNewConnectionCallback(const NewConnectionCallback &cb) {
+  impl_->setNewConnectionCallback(cb);
+}
 // start listening
-void Acceptor::listen() {}
+void Acceptor::listen() { impl_->listen(); }
 
 } // namespace net
